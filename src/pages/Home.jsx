@@ -9,15 +9,14 @@ import API_BASE_URL from "../config";
 const fetchProducts = async () => {
   try {
     console.log('Fetching products from API...');
-    const response = await fetch(`${API_BASE_URL}/products`,
-      {
-        method:'GET',
-        headers:{
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'GET',
+      mode: 'cors', // <-- this is important
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
-    );
+    });    
     if (!response.ok) {
       console.error('Failed to fetch products', response.statusText);
       throw new Error('Failed to fetch products');
