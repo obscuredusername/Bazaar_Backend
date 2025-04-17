@@ -147,11 +147,11 @@ const AddProductPage = () => {
       case 1: // Images
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-teal-600">Upload Product Images</h2>
-            <p className="text-teal-600">Add at least one image of your product</p>
+            <h2 className="text-2xl font-semibold text-amber-600">Upload Product Images</h2>
+            <p className="text-amber-600">Add at least one image of your product</p>
             
             <div>
-              <label className="block mb-2 font-medium text-teal-600">Product Images *</label>
+              <label className="block mb-2 font-medium text-amber-600">Product Images *</label>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 {product.images.map((imageData, index) => (
                   <div key={index} className="relative">
@@ -169,8 +169,8 @@ const AddProductPage = () => {
                     </button>
                   </div>
                 ))}
-                <label className={`border-2 border-dashed flex items-center justify-center rounded-lg cursor-pointer h-48 shadow-md hover:shadow-lg transition-shadow ${product.images.length === 0 ? 'border-red-400' : 'border-teal-400'}`}>
-                  <span className="text-4xl text-teal-500">+</span>
+                <label className={`border-2 border-dashed flex items-center justify-center rounded-lg cursor-pointer h-48 shadow-md hover:shadow-lg transition-shadow ${product.images.length === 0 ? 'border-red-400' : 'border-amber-400'}`}>
+                  <span className="text-4xl text-amber-500">+</span>
                   <input 
                     type="file" 
                     multiple 
@@ -190,7 +190,7 @@ const AddProductPage = () => {
                 className={`px-6 py-2 rounded-lg shadow-md flex items-center ${
                   product.images.length === 0 
                     ? 'bg-gray-300 cursor-not-allowed' 
-                    : 'bg-teal-500 text-white hover:bg-teal-600'
+                    : 'bg-amber-600 text-white hover:bg-amber-500'
                 }`}
               >
                 Next
@@ -203,30 +203,30 @@ const AddProductPage = () => {
       case 2: // Details
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-teal-600">Product Details</h2>
-            <p className="text-teal-600">Tell us more about your product</p>
+            <h2 className="text-2xl font-semibold text-amber-600">Product Details</h2>
+            <p className="text-amber-600">Tell us more about your product</p>
             
             {/* Basic Information */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block mb-2 font-medium text-teal-600">Title *</label>
+                <label className="block mb-2 font-medium text-amber-600">Title *</label>
                 <input 
                   type="text" 
                   name="title"
                   value={product.title}
                   onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-lg ${!product.title ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                  className={`w-full p-2 border rounded-lg ${!product.title ? 'border-red-400' : 'border-amber-300'} focus:outline-none focus:ring-2 focus:ring-amber-500`}
                   placeholder="Product title"
                 />
               </div>
               <div>
-                <label className="block mb-2 font-medium text-teal-600">Price *</label>
+                <label className="block mb-2 font-medium text-amber-600">Price *</label>
                 <input 
                   type="text" 
                   name="price"
                   value={product.price}
                   onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-lg ${!product.price ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                  className={`w-full p-2 border rounded-lg ${!product.price ? 'border-red-400' : 'border-amber-300'} focus:outline-none focus:ring-2 focus:ring-amber-500`}
                   placeholder="0.00"
                 />
               </div>
@@ -234,12 +234,12 @@ const AddProductPage = () => {
 
             {/* Description */}
             <div>
-              <label className="block mb-2 font-medium text-teal-600">Description</label>
+              <label className="block mb-2 font-medium text-amber-600">Description</label>
               <textarea 
                 name="description"
                 value={product.description}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 rows="4"
                 placeholder="Describe your product"
               />
@@ -248,24 +248,24 @@ const AddProductPage = () => {
             {/* Category and Type */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block mb-2 font-medium text-teal-600">Category</label>
+                <label className="block mb-2 font-medium text-amber-600">Category</label>
                 <select 
                   name="category"
                   value={product.category}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="buy">Buy</option>
                   <option value="rent">Rent</option>
                 </select>
               </div>
               <div>
-                <label className="block mb-2 font-medium text-teal-600">Type</label>
+                <label className="block mb-2 font-medium text-amber-600">Type</label>
                 <select 
                   name="type"
                   value={product.type}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="casual">Casual</option>
                   <option value="formal">Formal</option>
@@ -276,26 +276,26 @@ const AddProductPage = () => {
 
             {/* Size */}
             <div>
-              <label className="block mb-2 font-medium text-teal-600">Size</label>
+              <label className="block mb-2 font-medium text-amber-600">Size</label>
               <input 
                 type="text" 
                 name="size"
                 value={product.size}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Product size"
               />
             </div>
 
             {/* Return Policy */}
             <div>
-              <label className="block mb-2 font-medium text-teal-600">Return Policy</label>
+              <label className="block mb-2 font-medium text-amber-600">Return Policy</label>
               <input 
                 type="text" 
                 name="return_policy"
                 value={product.return_policy}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Return policy details"
               />
             </div>
@@ -304,7 +304,7 @@ const AddProductPage = () => {
               <button 
                 type="button" 
                 onClick={handleBack}
-                className="px-6 py-2 bg-gray-200 rounded-lg shadow-md hover:bg-gray-300"
+                className="px-6 py-2 bg-amber-100 text-amber-800 rounded-lg shadow-md hover:bg-amber-200"
               >
                 Back
               </button>
@@ -315,7 +315,7 @@ const AddProductPage = () => {
                 className={`px-6 py-2 rounded-lg shadow-md flex items-center ${
                   !product.title || !product.price
                     ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-teal-500 text-white hover:bg-teal-600'
+                    : 'bg-amber-600 text-white hover:bg-amber-500'
                 }`}
               >
                 Next
@@ -328,30 +328,30 @@ const AddProductPage = () => {
       case 3: // Location
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-teal-600">Location Information</h2>
-            <p className="text-teal-600">Where is your product located?</p>
+            <h2 className="text-2xl font-semibold text-amber-600">Location Information</h2>
+            <p className="text-amber-600">Where is your product located?</p>
             
             {/* Location Details */}
             <div>
-              <label className="block mb-2 font-medium text-teal-600">City</label>
+              <label className="block mb-2 font-medium text-amber-600">City</label>
               <input 
                 type="text" 
                 name="city"
                 value={product.city}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="City"
               />
             </div>
             
             <div>
-              <label className="block mb-2 font-medium text-teal-600">Location</label>
+              <label className="block mb-2 font-medium text-amber-600">Location</label>
               <input 
                 type="text" 
                 name="location"
                 value={product.location}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full p-2 border rounded-lg border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="Detailed location"
               />
             </div>
@@ -360,7 +360,7 @@ const AddProductPage = () => {
               <button 
                 type="button" 
                 onClick={handleBack}
-                className="px-6 py-2 bg-gray-200 rounded-lg shadow-md hover:bg-gray-300"
+                className="px-6 py-2 bg-amber-100 text-amber-800 rounded-lg shadow-md hover:bg-amber-200"
               >
                 Back
               </button>
@@ -371,7 +371,7 @@ const AddProductPage = () => {
                 className={`px-6 py-2 rounded-lg shadow-md ${
                   isLoading
                     ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-teal-500 text-white hover:bg-teal-600'
+                    : 'bg-amber-600 text-white hover:bg-amber-500'
                 }`}
               >
                 {isLoading ? 'Uploading...' : 'List Product'}
@@ -400,14 +400,14 @@ const AddProductPage = () => {
             {/* Step circle */}
             <div 
               className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                currentStep >= step.number ? 'bg-teal-500 text-white' : 'bg-gray-200'
+                currentStep >= step.number ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-600'
               }`}
             >
               {step.number}
             </div>
             
             {/* Step title */}
-            <div className="mx-2 text-sm font-medium text-teal-600">
+            <div className="mx-2 text-sm font-medium text-amber-600">
               {step.title}
             </div>
             
@@ -415,7 +415,7 @@ const AddProductPage = () => {
             {index < steps.length - 1 && (
               <div 
                 className={`flex-grow h-1 mx-2 ${
-                  currentStep > step.number ? 'bg-teal-500' : 'bg-gray-200'
+                  currentStep > step.number ? 'bg-amber-600' : 'bg-amber-200'
                 }`}
               ></div>
             )}
@@ -426,28 +426,28 @@ const AddProductPage = () => {
   };
 
   return (
-    <div className="h-screen w-640 bg-white">
+    <div className="h-screen w-full bg-amber-50">
       {/* Top Bar */}
-      <header className="sticky top-0 z-10 bg-gray-800 border-b border-gray-200 shadow-sm">
+      <header className="sticky top-0 z-10 bg-amber-900 border-b border-amber-600 shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center">
           <button 
             onClick={handleBack}
-            className="flex items-center text-teal-500 hover:text-teal-600 transition-colors mr-4"
+            className="flex items-center text-amber-200 hover:text-amber-100 transition-colors mr-4"
           >
             <ArrowLeft className="h-5 w-5 mr-1" />
             <span>{currentStep > 1 ? 'Back' : 'Home'}</span>
           </button>
-          <h1 className="text-xl font-bold text-teal-600 flex-1 text-center">Add New Product</h1>
+          <h1 className="text-xl font-bold text-amber-50 flex-1 text-center">Add New Product</h1>
           <div className="w-20"></div> {/* Spacer for alignment */}
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Progress Steps   */}
+        {/* Progress Steps */}
         {renderProgressSteps()}
         
         {/* Form Section */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-100 shadow-teal-300">
+        <div className="bg-white p-6 rounded-lg shadow-lg border border-amber-200">
           {renderStepContent()}
         </div>
       </div>

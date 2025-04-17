@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Heart, LogOut, User, ChevronDown, Filter } from "lucide-react";
+import { Search, Heart, LogOut, User, ChevronDown, Filter, Menu, X } from "lucide-react";
 import AuthModal from '../components/auth-modal';
 import ProductDetailsPage from './ProductDetailsPage';
 import API_BASE_URL from "../config";
@@ -8,15 +8,15 @@ import API_BASE_URL from "../config";
 // Fetch products from backend API
 const fetchProducts = async () => {
   try {
-    console.log('Fetching products from API...');
+    console.log('Fetching products from API...', API_BASE_URL);
     const response = await fetch(`${API_BASE_URL}/products`, {
       method: 'GET',
-      mode: 'cors', // <-- this is important
+      mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       }
-    });    
+    });
     if (!response.ok) {
       console.error('Failed to fetch products', response.statusText);
       throw new Error('Failed to fetch products');
@@ -31,34 +31,68 @@ const fetchProducts = async () => {
 };
 
 const ProductRow = ({ title, products, type, onProductClick }) => {
-  // Filter products by category (case insensitive)
+  const scrollRef = useRef(null);
+  
   const filteredProducts = products.filter(p => 
     p.type && p.type.toLowerCase() === type.toLowerCase()
   );
   
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+  
   return (
-    <div className="mb-12">
-      <div className="flex items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800 mr-4">{title}</h2>
-        <div className="w-3/12 border-t-2 border-dashed border-teal-300 mr-4"></div>
-        <div className="flex-grow border-t-2 border-teal-600"></div>
+    <div className="mb-8 md:mb-12">
+      <div className="flex items-center mb-4 md:mb-6">
+        <h2 className="text-xl md:text-3xl font-bold text-amber-800 mr-2 md:mr-4 whitespace-nowrap">{title}</h2>
+        <div className="w-2/12 md:w-3/12 border-t-2 border-dashed border-amber-300 mr-2 md:mr-4"></div>
+        <div className="flex-grow border-t-2 border-amber-600"></div>
       </div>
       
-      <div className="relative overflow-x-auto pb-4">
-        <div className="flex space-x-6 min-w-max">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map(product => (
-              <div className="min-w-[280px] max-w-[280px]" key={product.id}>
-                <ProductCard 
-                  product={product} 
-                  onLikeClick={() => alert(`Liked ${product.id}`)}
-                  onProductClick={() => onProductClick(product.id)}
-                />
-              </div>
-            ))
-          ) : (
-            <div className="py-8 px-4 text-gray-500">No products found in this category</div>
-          )}
+      <div className="relative">
+        {filteredProducts.length > 3 && (
+          <>
+            <button 
+              onClick={() => scroll('left')} 
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md z-10 hidden md:block"
+              aria-label="Scroll left"
+            >
+              <ChevronDown className="w-5 h-5 transform rotate-90 text-amber-700" />
+            </button>
+            
+            <button 
+              onClick={() => scroll('right')} 
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md z-10 hidden md:block"
+              aria-label="Scroll right"
+            >
+              <ChevronDown className="w-5 h-5 transform -rotate-90 text-amber-700" />
+            </button>
+          </>
+        )}
+        
+        <div 
+          ref={scrollRef}
+          className="overflow-x-auto pb-4 hide-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <div className="flex space-x-3 md:space-x-6 min-w-max">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map(product => (
+                <div className="min-w-[160px] md:min-w-[240px] lg:min-w-[280px] max-w-[280px]" key={product.id}>
+                  <ProductCard 
+                    product={product} 
+                    onLikeClick={() => alert(`Liked ${product.id}`)}
+                    onProductClick={() => onProductClick(product.id)}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="py-8 px-4 text-amber-500">No products found in this category</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -81,7 +115,7 @@ const ProductCard = ({ product, onLikeClick, onProductClick }) => {
   return (
     <div 
       onClick={() => onProductClick(product.id)}
-      className="bg-white group hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden relative cursor-pointer h-full"
+      className="bg-white group hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden relative cursor-pointer h-full border border-amber-200"
     >
       <div className="relative">
         <img
@@ -89,7 +123,7 @@ const ProductCard = ({ product, onLikeClick, onProductClick }) => {
               ? getImageUrl(product.images[0]) 
               : 'https://via.placeholder.com/300'}
           alt={product.title}
-          className="w-full h-64 object-cover group-hover:scale-105 transition-transform"
+          className="w-full h-40 md:h-56 lg:h-64 object-cover group-hover:scale-105 transition-transform"
           onError={(e) => {
             console.error("Image failed to load:", product.images && product.images[0]);
             e.target.src = 'https://via.placeholder.com/300';
@@ -100,34 +134,53 @@ const ProductCard = ({ product, onLikeClick, onProductClick }) => {
             e.stopPropagation();
             onLikeClick();
           }}
-          className="absolute top-3 right-3 bg-white/80 p-2 rounded-full hover:bg-white transition-colors"
+          className="absolute top-2 right-2 md:top-3 md:right-3 bg-white/80 p-1.5 md:p-2 rounded-full hover:bg-white transition-colors"
         >
-          <Heart className="w-5 h-5 text-gray-700 hover:fill-red-500 hover:text-red-500" />
+          <Heart className="w-4 h-4 md:w-5 md:h-5 text-amber-700 hover:fill-amber-500 hover:text-amber-500" />
         </button>
       </div>
-      <div className="p-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800 truncate">{product.title}</h3>
+      <div className="p-3 md:p-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+          <h3 className="text-sm md:text-lg font-semibold text-amber-900 truncate mb-1 md:mb-0">{product.title}</h3>
           <span 
-            className="px-3 py-1 bg-teal-600 text-white rounded-full text-sm hover:bg-teal-700 transition-colors"
+            className="px-2 py-0.5 md:px-3 md:py-1 bg-amber-600 text-white rounded-full text-xs md:text-sm hover:bg-amber-700 transition-colors inline-block w-fit mt-1 md:mt-0"
           >
             {product.category}
           </span>
         </div>
         <div className="mt-2 flex justify-between items-center">
-          <span className="text-teal-600 font-bold">${product.price}</span>
+          <span className="text-amber-600 font-bold">${product.price}</span>
         </div>
       </div>
     </div>
   );
 };
+
 // Filter component
 const FilterPanel = ({ filters, setFilters, applyFilters, isOpen, onClose }) => {
   const [tempFilters, setTempFilters] = useState(filters);
+  const filterRef = useRef(null);
   
   useEffect(() => {
     setTempFilters(filters);
   }, [filters]);
+  
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onClose]);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -143,32 +196,44 @@ const FilterPanel = ({ filters, setFilters, applyFilters, isOpen, onClose }) => 
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Filters</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div 
+        ref={filterRef}
+        className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md border-2 border-amber-200 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-amber-800">Filters</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-amber-100"
+            aria-label="Close filters"
+          >
+            <X className="w-5 h-5 text-amber-800" />
+          </button>
+        </div>
         
         <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Price Range</label>
+          <label className="block text-amber-700 mb-2">Price Range</label>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Min Price</label>
+              <label className="block text-sm text-amber-600 mb-1">Min Price</label>
               <input
                 type="number"
                 name="minPrice"
                 value={tempFilters.minPrice || ''}
                 onChange={handleChange}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 min="0"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Max Price</label>
+              <label className="block text-sm text-amber-600 mb-1">Max Price</label>
               <input
                 type="number"
                 name="maxPrice"
                 value={tempFilters.maxPrice || ''}
                 onChange={handleChange}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 min="0"
               />
             </div>
@@ -178,13 +243,13 @@ const FilterPanel = ({ filters, setFilters, applyFilters, isOpen, onClose }) => 
         <div className="flex justify-end space-x-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+            className="px-3 py-1.5 md:px-4 md:py-2 border border-amber-300 rounded-lg hover:bg-amber-100 text-amber-800"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+            className="px-3 py-1.5 md:px-4 md:py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
           >
             Apply Filters
           </button>
@@ -206,17 +271,22 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
   });
   const dropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
       }
     };
     
@@ -316,6 +386,7 @@ export default function Home() {
     localStorage.removeItem('bazaarUser');
     setCurrentUser(null);
     setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
     alert('You have been logged out');
   }
   
@@ -330,31 +401,43 @@ export default function Home() {
   };
   
   return (
-    <div className="h-screen w-640 bg-white">
+    <div className="h-screen w-full bg-white">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-800 border-b border-teal-600">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-10 bg-amber-900 border-b border-amber-600 shadow-md">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-white">Bazaar</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-amber-50">Bazaar</h1>
           </div>
 
-          <div className="flex-1 max-w-md mx-4">
-            <div className="relative">
+          {/* Mobile menu button */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="md:hidden ml-2 p-1 text-amber-50 hover:text-white"
+          >
+            {isMobileMenuOpen ? 
+              <X className="h-6 w-6" /> : 
+              <Menu className="h-6 w-6" />
+            }
+          </button>
+
+          {/* Desktop search and controls */}
+          <div className="hidden md:flex flex-1 max-w-md mx-4">
+            <div className="relative w-full">
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 border border-gray-700 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full py-2 pl-10 pr-4 border border-amber-700 rounded-lg bg-amber-800 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-amber-200"
               />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-amber-200" />
             </div>
           </div>
           
-          <div className="flex items-center">
+          <div className="hidden md:flex items-center">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="px-4 py-2 mr-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center"
+              className="px-4 py-2 mr-3 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors flex items-center"
             >
               <Filter className="w-4 h-4 mr-2" />
               Filters
@@ -363,7 +446,7 @@ export default function Home() {
             {!currentUser ? (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors"
               >
                 Login / Sign Up
               </button>
@@ -372,7 +455,7 @@ export default function Home() {
                 <div className="relative" ref={dropdownRef}>
                   <button 
                     onClick={toggleDropdown}
-                    className="flex items-center space-x-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+                    className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-500 transition-colors"
                   >
                     <User className="h-5 w-5" />
                     <span className="font-medium">{currentUser.username}</span>
@@ -380,12 +463,12 @@ export default function Home() {
                   </button>
                   
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-amber-200">
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                        className="flex items-center w-full px-4 py-2 text-amber-800 hover:bg-amber-100 transition-colors"
                       >
-                        <LogOut className="h-4 w-4 mr-2 text-teal-600" />
+                        <LogOut className="h-4 w-4 mr-2 text-amber-600" />
                         <span>Logout</span>
                       </button>
                     </div>
@@ -394,7 +477,7 @@ export default function Home() {
                 
                 <button
                   onClick={() => navigate("/add-product")}
-                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-teal-500 to-emerald-400 text-white rounded-full shadow-lg hover:from-teal-600 hover:to-emerald-500 transition-colors"
+                  className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-400 text-white rounded-full shadow-lg hover:from-amber-600 hover:to-amber-500 transition-colors"
                 >
                   <span className="text-2xl font-bold">+</span>
                 </button>
@@ -402,34 +485,107 @@ export default function Home() {
             )}
           </div>
         </div>
+        
+        {/* Mobile search bar */}
+        <div className="md:hidden px-4 pb-3 pt-1 bg-amber-900">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full py-1.5 pl-8 pr-3 text-sm border border-amber-700 rounded-lg bg-amber-800 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-amber-200"
+            />
+            <Search className="absolute left-2 top-2 h-4 w-4 text-amber-200" />
+          </div>
+        </div>
       </header>
 
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          ref={mobileMenuRef}
+          className="fixed inset-0 z-30 md:hidden bg-amber-900 bg-opacity-95 flex flex-col pt-16 pb-6 px-4"
+        >
+          <div className="space-y-4">
+            <button
+              onClick={() => {
+                setIsFilterOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center w-full px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors"
+            >
+              <Filter className="w-4 h-4 mr-3" />
+              <span>Filters</span>
+            </button>
+            
+            {!currentUser ? (
+              <button
+                onClick={() => {
+                  setIsAuthModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors"
+              >
+                Login / Sign Up
+              </button>
+            ) : (
+              <>
+                <div className="flex items-center px-4 py-3 bg-amber-800 rounded-lg">
+                  <User className="h-5 w-5 text-amber-200 mr-3" />
+                  <span className="font-medium text-white">{currentUser.username}</span>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                >
+                  <LogOut className="h-4 w-4 mr-3" />
+                  <span>Logout</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    navigate("/add-product");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center w-full px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 text-white rounded-lg hover:from-amber-600 hover:to-amber-500 transition-colors"
+                >
+                  <span className="text-xl font-bold mr-2">+</span>
+                  <span>Add New Product</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-center">
-          <div className="bg-gray-800 p-2 rounded-full">
-            <div className="grid grid-cols-3 gap-2">
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        <div className="mb-6 md:mb-8 flex justify-center">
+          <div className="bg-amber-900 p-1 md:p-2 rounded-full">
+            <div className="grid grid-cols-3 gap-1 md:gap-2">
               <button
                 onClick={() => setActiveTab("home")}
-                className={`text-white px-12 py-1 rounded-full transition-colors duration-300 ease-in-out ${
-                  activeTab === "home" ? "bg-teal-600" : "bg-gray-800"
-                }`}
+                className={`text-white text-sm md:text-base px-3 py-1 rounded-full transition-colors duration-300 ease-in-out ${
+                  activeTab === "home" ? "bg-amber-600" : "bg-amber-800"
+                } md:px-12`}
               >
                 Home
               </button>
               <button
                 onClick={() => setActiveTab("buy")}
-                className={`text-white px-12 py-1 rounded-full transition-colors duration-300 ease-in-out ${
-                  activeTab === "buy" ? "bg-teal-600" : "bg-gray-800"
-                }`}
+                className={`text-white text-sm md:text-base px-3 py-1 rounded-full transition-colors duration-300 ease-in-out ${
+                  activeTab === "buy" ? "bg-amber-600" : "bg-amber-800"
+                } md:px-12`}
               >
                 Buy
               </button>
               <button
                 onClick={() => setActiveTab("rent")}
-                className={`text-white px-12 py-1 rounded-full transition-colors duration-300 ease-in-out ${
-                  activeTab === "rent" ? "bg-teal-600" : "bg-gray-800"
-                }`}
+                className={`text-white text-sm md:text-base px-3 py-1 rounded-full transition-colors duration-300 ease-in-out ${
+                  activeTab === "rent" ? "bg-amber-600" : "bg-amber-800"
+                } md:px-12`}
               >
                 Rent
               </button>
@@ -438,8 +594,8 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+          <div className="flex justify-center items-center py-12 md:py-20">
+            <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-t-2 border-b-2 border-amber-500"></div>
           </div>
         ) : (
           <>
@@ -470,13 +626,25 @@ export default function Home() {
             ) : null}
             
             {filteredProducts.length === 0 && !loading && (
-              <div className="flex justify-center items-center py-10">
-                <div className="text-gray-500 text-lg">No products found</div>
+              <div className="flex justify-center items-center py-8 md:py-10">
+                <div className="text-amber-500 text-base md:text-lg">No products found</div>
               </div>
             )}
           </>
         )}
       </main>
+      
+      {/* Fixed add button for mobile */}
+      {currentUser && (
+        <div className="fixed bottom-6 right-6 md:hidden z-20">
+          <button
+            onClick={() => navigate("/add-product")}
+            className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-400 text-white rounded-full shadow-lg hover:from-amber-600 hover:to-amber-500 transition-colors"
+          >
+            <span className="text-2xl font-bold">+</span>
+          </button>
+        </div>
+      )}
       
       <AuthModal 
         isOpen={isAuthModalOpen} 
@@ -491,6 +659,17 @@ export default function Home() {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />
+      
+      {/* Add custom styles for hiding scrollbars */}
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }
