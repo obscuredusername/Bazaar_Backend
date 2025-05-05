@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import API_BASE_URL from "../config"
 import { Mail, X, LogIn, UserPlus } from "lucide-react"
 import Modal from "../components/modal" // Import the Modal component
@@ -17,6 +17,7 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [googleInitialized, setGoogleInitialized] = useState(false)
+  const googleButtonRef = useRef(null)
   
   // Modal state
   const [messageModal, setMessageModal] = useState({
@@ -26,39 +27,79 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
     actions: null
   })
 
+  // Google client cleanup reference
+  const googleClientRef = useRef(null)
+
   // Initialize Google Auth Client
   useEffect(() => {
+    let googleScriptLoaded = false
+    let cleanupNeeded = false
+
     // Load Google's authentication script
     const loadGoogleScript = () => {
+      if (document.getElementById('google-auth-script')) {
+        // Script already exists, just initialize
+        initializeGoogleAuth()
+        return
+      }
+
       const script = document.createElement('script')
+      script.id = 'google-auth-script'
       script.src = 'https://accounts.google.com/gsi/client'
       script.async = true
       script.defer = true
-      script.onload = initializeGoogleAuth
+      script.onload = () => {
+        googleScriptLoaded = true
+        initializeGoogleAuth()
+      }
       document.body.appendChild(script)
     }
 
     // Initialize Google authentication
     const initializeGoogleAuth = () => {
       if (window.google && !googleInitialized) {
-        window.google.accounts.id.initialize({
-          client_id: '96398954937-fro4o9nvvftfue7a5q3ghhm7bbs1kqi4.apps.googleusercontent.com', // Replace with your actual Google Client ID
-          callback: handleGoogleResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        })
-        setGoogleInitialized(true)
+        try {
+          // Clean up any existing google client
+          if (googleClientRef.current) {
+            window.google.accounts.id.cancel()
+            googleClientRef.current = null
+          }
+
+          // Initialize new client with FedCM disabled
+          window.google.accounts.id.initialize({
+            client_id: '96398954937-fro4o9nvvftfue7a5q3ghhm7bbs1kqi4.apps.googleusercontent.com', // Replace with your actual Google Client ID
+            callback: handleGoogleResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            use_fedcm_for_prompt: false // Disable FedCM to avoid the error
+          })
+          
+          googleClientRef.current = true
+          setGoogleInitialized(true)
+          cleanupNeeded = true
+        } catch (err) {
+          console.error("Google auth initialization error:", err)
+          setError("Failed to initialize Google authentication. Please try email login.")
+        }
       }
     }
 
-    if (!googleInitialized && isOpen) {
+    if (isOpen && !googleInitialized) {
       loadGoogleScript()
     }
 
     return () => {
-      // Clean up if needed
+      // Clean up Google client when component unmounts or modal closes
+      if (cleanupNeeded && googleScriptLoaded && window.google) {
+        try {
+          window.google.accounts.id.cancel()
+          googleClientRef.current = null
+        } catch (err) {
+          console.error("Error cleaning up Google client:", err)
+        }
+      }
     }
-  }, [isOpen, googleInitialized])
+  }, [isOpen, googleInitialized, authMode])
 
   // Show message modal function
   const showMessage = (title, description, actions = null) => {
@@ -81,13 +122,14 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
   // Handle Google's response
   const handleGoogleResponse = async (response) => {
     if (!response || !response.credential) {
-      setError("Google authentication failed")
+      // User likely canceled the process
+      setLoading(false)
       return
     }
 
     setLoading(true)
     try {
-      // Send the Google ID token to your backend
+      // Use the correct endpoint based on authMode
       const endpoint = authMode === "signup" ? "/google-signup" : "/google-login"
       const apiResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
@@ -139,7 +181,6 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
             "You've successfully signed up and logged in.",
             <button
               onClick={() => {
-
                 closeMessageModal() // Close auth modal after successful signup/login
               }}
               className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
@@ -189,10 +230,119 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
 
   // Function to trigger Google sign-in popup
   const handleGoogleSignIn = () => {
+    if (loading) return
+    
+    setLoading(true)
+    setError("")
+    
     if (window.google && googleInitialized) {
-      window.google.accounts.id.prompt()
+      try {
+        // Cancel any existing prompt first to avoid FedCM conflicts
+        window.google.accounts.id.cancel()
+        
+        // Create the OAuth URL manually if FedCM is causing issues
+        const handleManualOAuth = () => {
+          // Get the client ID from your Google initialization
+          const clientId = '96398954937-fro4o9nvvftfue7a5q3ghhm7bbs1kqi4.apps.googleusercontent.com'
+          
+          // Define redirect URI - this should match what's in your Google Console
+          // For local development, you might use something like:
+          const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/google-callback`)
+          
+          // Define OAuth scopes
+          const scope = encodeURIComponent('email profile')
+          
+          // Build the OAuth URL
+          const oauthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&prompt=select_account`
+          
+          // Open the OAuth URL in a popup window
+          const width = 500
+          const height = 600
+          const left = window.screen.width / 2 - width / 2
+          const top = window.screen.height / 2 - height / 2
+          
+          const popup = window.open(
+            oauthUrl,
+            'googleOAuthPopup',
+            `width=${width},height=${height},left=${left},top=${top}`
+          )
+          
+          // Set up message listener for the popup callback
+          const handleMessage = (event) => {
+            // Verify origin for security
+            if (event.origin !== window.location.origin) return
+            
+            if (event.data && event.data.type === 'google_auth_callback') {
+              if (event.data.credential) {
+                // Process the credential
+                handleGoogleResponse(event.data)
+              } else if (event.data.error) {
+                setError('Google authentication failed: ' + event.data.error)
+              }
+              
+              // Clean up
+              window.removeEventListener('message', handleMessage)
+              if (popup) popup.close()
+              setLoading(false)
+            }
+          }
+          
+          window.addEventListener('message', handleMessage)
+          
+          // Set timeout in case popup is closed without sending a message
+          setTimeout(() => {
+            if (popup && popup.closed) {
+              window.removeEventListener('message', handleMessage)
+              setLoading(false)
+            }
+          }, 1000)
+        }
+        
+        // First try the regular Google prompt with a fallback to manual OAuth
+        try {
+          // Small delay to ensure cancel completes
+          setTimeout(() => {
+            try {
+              window.google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed()) {
+                  console.log("Google prompt not displayed:", notification.getNotDisplayedReason())
+                  
+                  // FedCM errors will show up here - try the manual OAuth approach
+                  if (notification.getNotDisplayedReason() === "opt_out_or_no_session" || 
+                      notification.getNotDisplayedReason() === "browser_not_supported") {
+                    // Fall back to traditional OAuth flow
+                    handleManualOAuth()
+                  } else {
+                    setError("Couldn't display Google sign-in. Please try email login instead.")
+                    setLoading(false)
+                  }
+                } else if (notification.isSkippedMoment()) {
+                  console.log("Google prompt skipped:", notification.getSkippedReason())
+                  setLoading(false)
+                } else if (notification.isDismissedMoment()) {
+                  // User dismissed the prompt
+                  console.log("Google prompt dismissed:", notification.getDismissedReason())
+                  setLoading(false)
+                }
+              })
+            } catch (err) {
+              console.error("Google prompt error:", err)
+              // Try manual OAuth as fallback
+              handleManualOAuth()
+            }
+          }, 50)
+        } catch (err) {
+          console.error("Google prompt error, falling back to manual OAuth:", err)
+          handleManualOAuth()
+        }
+      } catch (err) {
+        console.error("Google sign-in error:", err)
+        setError("Google authentication failed. Please try email login instead.")
+        setLoading(false)
+      }
     } else {
       setError("Google authentication is not initialized yet. Please try again.")
+      setLoading(false)
     }
   }
 
@@ -313,13 +463,29 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
     }
   }
 
+  // Reset state when authMode changes
+  useEffect(() => {
+    setError("")
+    setLoading(false)
+  }, [authMode])
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white p-5 md:p-8 rounded-xl w-full max-w-md relative shadow-xl border-2 border-amber-200">
         <button 
-          onClick={onClose} 
+          onClick={() => {
+            // Ensure Google client is cleaned up when modal is closed
+            if (window.google && googleClientRef.current) {
+              try {
+                window.google.accounts.id.cancel()
+              } catch (err) {
+                console.error("Error canceling Google client:", err)
+              }
+            }
+            onClose()
+          }} 
           className="absolute top-4 right-4 text-amber-700 hover:text-amber-900 p-1 rounded-full hover:bg-amber-100 transition-colors"
           aria-label="Close modal"
         >
@@ -432,6 +598,7 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
             </button>
 
             <button
+              ref={googleButtonRef}
               onClick={handleGoogleSignIn}
               className="w-full bg-white text-amber-800 p-2 border border-amber-300 rounded-lg hover:bg-amber-50 transition-all flex items-center justify-center font-medium relative"
               disabled={loading || !googleInitialized}
