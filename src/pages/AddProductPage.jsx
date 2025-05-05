@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from "../config.js";
 import { ArrowLeft, ChevronRight } from 'lucide-react';
@@ -17,9 +17,25 @@ const AddProductPage = () => {
     type: 'casual',
     price: '',
     category: 'buy',
-    user_id: '1',
+    user_id: '',
     images: [],
   });
+
+  useEffect(() => {
+    // Get user data from localStorage when component mounts
+    const userDataString = localStorage.getItem('bazaarUser');
+    if (userDataString) {
+      const userData = JSON.parse(userDataString);
+      setProduct(prev => ({
+        ...prev,
+        user_id: userData.id
+      }));
+    } else {
+      console.error('No user data found in localStorage');
+      alert('Please log in to add a product');
+      navigate('/login'); // Optionally redirect to login page
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

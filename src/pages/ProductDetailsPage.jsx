@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Heart, ChevronRight, Star, MessageCircle, Mail, Phone } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mail, Phone, Copy } from 'lucide-react';
 import API_BASE_URL from "../config";
 
 const ProductDetailsPage = ({ productId, onBack }) => {
@@ -7,6 +7,8 @@ const ProductDetailsPage = ({ productId, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
 
   // Fetch product details
   const fetchProductDetails = async () => {
@@ -83,6 +85,17 @@ const ProductDetailsPage = ({ productId, onBack }) => {
     );
   };
 
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text);
+    if (type === 'email') {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } else if (type === 'phone') {
+      setCopiedPhone(true);
+      setTimeout(() => setCopiedPhone(false), 2000);
+    }
+  };
+
   return (
     <div className="h-screen w-full bg-amber-50">
       <header className="sticky top-0 z-10 bg-amber-900 border-b border-amber-600 shadow-lg">
@@ -100,13 +113,13 @@ const ProductDetailsPage = ({ productId, onBack }) => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Image Carousel */}
-        <div className="relative mb-8">
-          <div className="relative w-full h-[300px] md:h-[500px] overflow-hidden rounded-xl shadow-lg">
+        {/* Image Carousel - Modified for more square proportions */}
+        <div className="relative mb-8 flex justify-center">
+          <div className="relative w-full max-w-md h-[400px] overflow-hidden rounded-xl shadow-lg">
             <img
               src={productImages[currentImageIndex]}
               alt={`${product.title} - Image ${currentImageIndex + 1}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
             
             {/* Carousel Navigation */}
@@ -149,15 +162,6 @@ const ProductDetailsPage = ({ productId, onBack }) => {
               <h2 className="text-3xl md:text-4xl font-bold text-amber-900 mb-2">{product.title}</h2>
               <div className="flex items-center space-x-2">
                 <span className="text-2xl text-amber-600 font-semibold">${product.price}</span>
-                <div className="flex items-center text-yellow-500">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`w-5 h-5 ${i < 4 ? 'fill-yellow-500' : 'text-gray-300'}`} 
-                    />
-                  ))}
-                  <span className="text-amber-600 ml-2 text-sm">(No reviews)</span>
-                </div>
               </div>
             </div>
 
@@ -192,14 +196,9 @@ const ProductDetailsPage = ({ productId, onBack }) => {
 
             <div className="flex flex-wrap gap-4">
               <button 
-                className="flex-1 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors shadow-md"
+                className="w-full px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-500 transition-colors shadow-md"
               >
-                {product.category === 'Rent' ? 'Rent Now' : 'Add to Cart'}
-              </button>
-              <button 
-                className="flex-1 px-6 py-3 border-2 border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
-              >
-                {product.category === 'Rent' ? 'Check Availability' : 'Add to Wishlist'}
+                {product.category === 'Rent' ? 'Rent Now' : 'Purchase Now'}
               </button>
             </div>
           </div>
@@ -219,45 +218,36 @@ const ProductDetailsPage = ({ productId, onBack }) => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center">
-                <Star className="w-5 h-5 text-yellow-500 mr-2 fill-yellow-500" />
-                <span className="text-amber-700">{product.user?.rating || 'N/A'} Seller Rating</span>
-              </div>
-
               <div className="border-t border-amber-200 pt-4">
                 <h4 className="text-lg font-semibold mb-3 text-amber-800">Contact Information</h4>
                 <div className="space-y-2">
                   <div className="flex items-center">
                     <Mail className="w-5 h-5 mr-2 text-amber-600" />
                     <span className="text-amber-700">{product.user?.email || 'N/A'}</span>
+                    <button 
+                      onClick={() => copyToClipboard(product.user?.email, 'email')}
+                      className="ml-2 p-1 hover:bg-amber-100 rounded transition-colors"
+                      title="Copy email"
+                    >
+                      <Copy className="w-4 h-4 text-amber-600" />
+                    </button>
+                    {copiedEmail && (
+                      <span className="text-xs text-green-600 ml-2">Copied!</span>
+                    )}
                   </div>
                   <div className="flex items-center">
                     <Phone className="w-5 h-5 mr-2 text-amber-600" />
                     <span className="text-amber-700">{product.user?.contact_no || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MessageCircle className="w-5 h-5 mr-2 text-amber-600" />
-                    <span className="text-amber-700 cursor-pointer hover:text-amber-500">Chat with Seller</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-amber-200 pt-4">
-                <h4 className="text-lg font-semibold mb-3 text-amber-800">Seller Statistics</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center p-2 bg-amber-50 rounded-lg">
-                    <p className="text-2xl font-bold text-amber-600">-</p>
-                    <p className="text-sm text-amber-600">Products</p>
-                  </div>
-                  <div className="text-center p-2 bg-amber-50 rounded-lg">
-                    <p className="text-2xl font-bold text-amber-600">{product.user?.rating}%</p>
-                    <p className="text-sm text-amber-600">Positive Reviews</p>
-                  </div>
-                  <div className="text-center p-2 bg-amber-50 rounded-lg">
-                    <p className="text-2xl font-bold text-amber-600">
-                      {product.user?.joining_date ? Math.floor((new Date() - new Date(product.user.joining_date)) / (365.25 * 24 * 60 * 60 * 1000)) : '0'}y
-                    </p>
-                    <p className="text-sm text-amber-600">On Platform</p>
+                    <button 
+                      onClick={() => copyToClipboard(product.user?.contact_no, 'phone')}
+                      className="ml-2 p-1 hover:bg-amber-100 rounded transition-colors"
+                      title="Copy phone number"
+                    >
+                      <Copy className="w-4 h-4 text-amber-600" />
+                    </button>
+                    {copiedPhone && (
+                      <span className="text-xs text-green-600 ml-2">Copied!</span>
+                    )}
                   </div>
                 </div>
               </div>

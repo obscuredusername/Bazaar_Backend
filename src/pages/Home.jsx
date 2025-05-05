@@ -4,6 +4,7 @@ import { Search, Heart, LogOut, User, ChevronDown, Filter, Menu, X } from "lucid
 import AuthModal from '../components/auth-modal';
 import ProductDetailsPage from './ProductDetailsPage';
 import API_BASE_URL from "../config";
+import AdsSideSheet from '../components/AdSideSheet';
 
 // Fetch products from backend API
 const fetchProducts = async () => {
@@ -29,6 +30,7 @@ const fetchProducts = async () => {
     return [];
   }
 };
+
 
 const ProductRow = ({ title, products, type, onProductClick }) => {
   const scrollRef = useRef(null);
@@ -278,6 +280,8 @@ export default function Home() {
   });
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
+  const [isAdsSideSheetOpen, setIsAdsSideSheetOpen] = useState(false);
+const [myAds, setMyAds] = useState([]);
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -390,6 +394,93 @@ export default function Home() {
     alert('You have been logged out');
   }
   
+  const handleAds = async () => {
+    try {
+      // Get user data from localStorage
+      const userDataString = localStorage.getItem('bazaarUser');
+      if (!userDataString) {
+        console.error('No user data found in localStorage');
+        alert('Please log in to view your ads');
+        return;
+      }
+      
+      const userData = JSON.parse(userDataString);
+      const userId = userData.user_id || userData.id;
+      if (!userId) {
+        console.error('User ID not found in stored data');
+        alert('User ID not available. Please log in again.');
+        return;
+      }
+      
+      // Check if API_BASE_URL is properly configured
+      if (!API_BASE_URL || API_BASE_URL === 'undefined' || API_BASE_URL === '') {
+        console.error('API_BASE_URL is not properly configured:', API_BASE_URL);
+        alert('Server configuration error. Please contact support.');
+        return;
+      }
+      
+      console.log('Fetching ads for user ID:', userId);
+      
+      // Ensure the URL is valid before making the request
+      const apiUrl = `${API_BASE_URL}/ads`;
+      console.log('Request URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ id: userId })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to fetch ads', response.status, response.statusText);
+        throw new Error(`Failed to fetch ads: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Fetched ads:', data);
+      
+      if (data.adslist && data.adslist.length > 0) {
+        // Process image URLs to ensure they're fully qualified
+        const processedAds = data.adslist.map(ad => {
+          // Check if images exist and is an array
+          if (ad.images && Array.isArray(ad.images)) {
+            // Process each image URL to ensure it has the base URL if it's a relative path
+            const processedImages = ad.images.map(imagePath => {
+              // If the path is already absolute (starts with http or https), return as is
+              if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                return imagePath;
+              }
+              
+              // Otherwise, append the API_BASE_URL to make it a full URL
+              // Remove any leading slash from the image path to avoid double slashes
+              const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+              return `${API_BASE_URL}/${cleanPath}`;
+            });
+            
+            return { ...ad, images: processedImages };
+          }
+          return ad;
+        });
+        
+        setMyAds(processedAds);
+        setIsAdsSideSheetOpen(true);
+        setIsDropdownOpen(false); // Close the dropdown when opening side sheet
+      } else {
+        alert('You have not created any ads yet');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error fetching ads:', error);
+      alert('Failed to fetch your ads. Please try again later.');
+      return [];
+    }
+  };
+
+
   // Toggle dropdown menu
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -465,12 +556,19 @@ export default function Home() {
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-amber-200">
                       <button
+                        onClick={handleAds}
+                        className="flex items-center w-full px-4 py-2 text-amber-800 hover:bg-amber-100 transition-colors"
+                      >
+                        <span>Your ads</span>
+                      </button>
+                      <button
                         onClick={handleLogout}
                         className="flex items-center w-full px-4 py-2 text-amber-800 hover:bg-amber-100 transition-colors"
                       >
                         <LogOut className="h-4 w-4 mr-2 text-amber-600" />
                         <span>Logout</span>
                       </button>
+                      
                     </div>
                   )}
                 </div>
@@ -645,7 +743,11 @@ export default function Home() {
           </button>
         </div>
       )}
-      
+        <AdsSideSheet 
+  isOpen={isAdsSideSheetOpen} 
+  onClose={() => setIsAdsSideSheetOpen(false)} 
+  ads={myAds} 
+/>
       <AuthModal 
         isOpen={isAuthModalOpen} 
         emitMessage={handleAuthMessage}
@@ -671,5 +773,8 @@ export default function Home() {
         }
       `}</style>
     </div>
+    
   );
+
+ 
 }

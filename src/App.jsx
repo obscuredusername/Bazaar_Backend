@@ -2,7 +2,7 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import { Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
-import viteLogo from '/vite.svg'
+import viteLogo from '/logo.jpeg'
 import './App.css'
 import AddProductPage from './pages/AddProductPage'
 
