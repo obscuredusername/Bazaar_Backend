@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import API_BASE_URL from "../config"
 import { Mail, X, LogIn, UserPlus } from "lucide-react"
+import Modal from "../components/modal" // Import the Modal component
 
 const AuthModal = ({ isOpen, onClose, emitMessage }) => {
   const [authMode, setAuthMode] = useState("login")
@@ -16,6 +17,14 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [googleInitialized, setGoogleInitialized] = useState(false)
+  
+  // Modal state
+  const [messageModal, setMessageModal] = useState({
+    isOpen: false,
+    title: "",
+    description: "",
+    actions: null
+  })
 
   // Initialize Google Auth Client
   useEffect(() => {
@@ -51,6 +60,24 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
     }
   }, [isOpen, googleInitialized])
 
+  // Show message modal function
+  const showMessage = (title, description, actions = null) => {
+    setMessageModal({
+      isOpen: true,
+      title,
+      description,
+      actions
+    })
+  }
+
+  // Close message modal function
+  const closeMessageModal = () => {
+    setMessageModal({
+      ...messageModal,
+      isOpen: false
+    })
+  }
+
   // Handle Google's response
   const handleGoogleResponse = async (response) => {
     if (!response || !response.credential) {
@@ -76,12 +103,52 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
         throw new Error(data?.detail || "Google authentication failed")
       }
 
-      if (authMode === "signup" && !data.user_id) {
-        alert("Success: User has been created")
-        setAuthMode("login")
-      }
+      if (authMode === "signup") {
+        if (!data.user_id) {
+          // Show success modal for signup
+          showMessage(
+            "Account Created", 
+            "Your account has been successfully created! Please log in now.",
+            <button
+              onClick={() => {
+                closeMessageModal()
+                setAuthMode("login")
+              }}
+              className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+            >
+              Continue to Login
+            </button>
+          )
+        } else {
+          // Store user data in localStorage for session persistence
+          const userData = {
+            id: data.user_id,
+            username: data.username,
+            auth_provider: "google"
+          }
+          
+          localStorage.setItem('bazaarUser', JSON.stringify(userData))
+          
+          // Pass user data back to parent component
+          emitMessage(userData)
+          
+          // Show success modal
+          onClose()
+          showMessage(
+            "Welcome!", 
+            "You've successfully signed up and logged in.",
+            <button
+              onClick={() => {
 
-      if (data.user_id) {
+                closeMessageModal() // Close auth modal after successful signup/login
+              }}
+              className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+            >
+              Continue
+            </button>
+          )
+        }
+      } else if (data.user_id) {
         // Store user data in localStorage for session persistence
         const userData = {
           id: data.user_id,
@@ -94,8 +161,21 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
         // Pass user data back to parent component
         emitMessage(userData)
         
-        alert(`${authMode === "signup" ? "Signup" : "Login"} with Google successful!`)
-        onClose() // Close modal after successful login/signup
+        // Show success modal
+        onClose() 
+        showMessage(
+          "Welcome Back!", 
+          "You've successfully logged in.",
+          <button
+            onClick={() => {
+              closeMessageModal()
+              // Close auth modal after successful login
+            }}
+            className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+          >
+            Continue
+          </button>
+        )
       } else {
         if (authMode === "login") throw new Error("No user ID returned")
       }
@@ -179,8 +259,20 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
       }
 
       if (isSignup) {
-        alert("Success: User has been created")
-        setAuthMode("login")
+        // Show success modal
+        showMessage(
+          "Account Created", 
+          "Your account has been successfully created! Please log in now.",
+          <button
+            onClick={() => {
+              closeMessageModal()
+              setAuthMode("login")
+            }}
+            className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+          >
+            Continue to Login
+          </button>
+        )
       }
 
       if (data.user_id) {
@@ -196,8 +288,20 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
         // Pass user data back to parent component
         emitMessage(userData)
         
-        alert(`${isSignup ? "Signup" : "Login"} successful!`)
-        onClose() // Close modal after successful login/signup
+        // Show success modal
+        showMessage(
+          isSignup ? "Welcome!" : "Welcome Back!", 
+          `You've successfully ${isSignup ? "signed up and logged in" : "logged in"}.`,
+          <button
+            onClick={() => {
+              closeMessageModal()
+              onClose() // Close auth modal after successful login
+            }}
+            className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+          >
+            Continue
+          </button>
+        )
       } else {
         if (!isSignup) throw new Error("No user ID returned")
       }
@@ -396,6 +500,16 @@ const AuthModal = ({ isOpen, onClose, emitMessage }) => {
           )}
         </div>
       </div>
+
+      {/* Message Modal */}
+      {messageModal.isOpen && (
+        <Modal
+          title={messageModal.title}
+          description={messageModal.description}
+          actions={messageModal.actions}
+          onClose={closeMessageModal}
+        />
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Modal from '../components/modal.jsx';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from "../config.js";
 import { ArrowLeft, ChevronRight } from 'lucide-react';
@@ -20,6 +21,12 @@ const AddProductPage = () => {
     user_id: '',
     images: [],
   });
+  const [messageModal, setMessageModal] = useState({
+    isOpen: false,
+    title: "",
+    description: "",
+    actions: null
+  })
 
   useEffect(() => {
     // Get user data from localStorage when component mounts
@@ -32,8 +39,10 @@ const AddProductPage = () => {
       }));
     } else {
       console.error('No user data found in localStorage');
-      alert('Please log in to add a product');
-      navigate('/login'); // Optionally redirect to login page
+      showMessage(
+        "Log in!", 
+        "Please log in to add a product",
+      )
     }
   }, []);
 
@@ -61,7 +70,10 @@ const AddProductPage = () => {
       console.log('Images selected:', imageURIs);
     } catch (error) {
       console.error('Image selection error:', error);
-      alert('Failed to select image');
+      showMessage(
+        "Failure!", 
+        "Failed to select an Image",
+      )
     }
   };
 
@@ -113,7 +125,10 @@ const AddProductPage = () => {
   const handleNext = () => {
     const validationError = validateStep();
     if (validationError) {
-      alert(validationError);
+      showMessage(
+        "Validation Error!", 
+        validationError,
+      )
       return;
     }
     setCurrentStep(currentStep + 1);
@@ -146,16 +161,43 @@ const AddProductPage = () => {
       if (!response.ok) {
         throw new Error(responseData.detail || 'Upload failed');
       }
-
-      alert('Product uploaded successfully!');
-      navigate('/');
+      showMessage(
+        "Successful!", 
+        "Product uploaded successfully!",
+        <button onClick={() => {
+          closeMessageModal()
+          navigate('/')}}
+          className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+          >
+            Okay
+          </button>
+      )
+      
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Upload Failed: Server error. Check your connection and try again.');
+      showMessage(
+        'Connection Failure',
+        'Upload Failed: Server error. Check your connection and try again.'
+      )
     } finally {
       setIsLoading(false);
     }
   };
+  const showMessage = (title, description, actions = null) => {
+    setMessageModal({
+      isOpen: true,
+      title,
+      description,
+      actions
+    })
+  }
+  // Close message modal function
+  const closeMessageModal = () => {
+    setMessageModal({
+      ...messageModal,
+      isOpen: false
+    })
+  }
 
   // Content for each step
   const renderStepContent = () => {
@@ -440,6 +482,15 @@ const AddProductPage = () => {
       </div>
     );
   };
+
+  {messageModal.isOpen && (
+    <Modal
+      title={messageModal.title}
+      description={messageModal.description}
+      actions={messageModal.actions}
+      onClose={closeMessageModal}
+    />
+  )}
 
   return (
     <div className="h-screen w-full bg-amber-50">

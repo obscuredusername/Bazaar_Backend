@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Heart, LogOut, User, ChevronDown, Filter, Menu, X } from "lucide-react";
+import { Search, Heart, LogOut, User, ChevronDown, Filter, Menu, X, BackpackIcon } from "lucide-react";
 import AuthModal from '../components/auth-modal';
+import Modal from "../components/modal";
+import { ArrowLeft } from "lucide-react";
 import ProductDetailsPage from './ProductDetailsPage';
 import API_BASE_URL from "../config";
 import bazaar from '../assets/manImg.png'
@@ -272,7 +274,13 @@ export default function Home() {
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const [isAdsSideSheetOpen, setIsAdsSideSheetOpen] = useState(false);
-const [myAds, setMyAds] = useState([]);
+  const [myAds, setMyAds] = useState([]);
+  const [messageModal, setMessageModal] = useState({
+    isOpen: false,
+    title: "",
+    description: "",
+    actions: null
+  })
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -378,12 +386,45 @@ const [myAds, setMyAds] = useState([]);
   }
   
   // Handle logout
+  const showMessage = (title, description, actions = null) => {
+    setMessageModal({
+      isOpen: true,
+      title,
+      description,
+      actions
+    })
+  }
+
+  // Close message modal function
+  const closeMessageModal = () => {
+    setMessageModal({
+      ...messageModal,
+      isOpen: false
+    })
+  }
+
+  const openLogout = () => {
+    showMessage(
+      "Logging out", 
+      "Are you sure you want to Log Out?",
+      <button
+
+        onClick={() => {
+          closeMessageModal()
+          handleLogout()
+        }}
+        className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+      >
+        Log Out
+      </button>
+    )
+  }  
+
   const handleLogout = () => {
     localStorage.removeItem('bazaarUser');
     setCurrentUser(null);
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    alert('You have been logged out');
   }
   
   const handleAds = async () => {
@@ -392,7 +433,10 @@ const [myAds, setMyAds] = useState([]);
       const userDataString = localStorage.getItem('bazaarUser');
       if (!userDataString) {
         console.error('No user data found in localStorage');
-        alert('Please log in to view your ads');
+        showMessage(
+          "Error",
+          "Please log in to view Ads"
+        )
         return;
       }
       
@@ -400,14 +444,20 @@ const [myAds, setMyAds] = useState([]);
       const userId = userData.user_id || userData.id;
       if (!userId) {
         console.error('User ID not found in stored data');
-        alert('User ID not available. Please log in again.');
+        showMessage(
+          "Error",
+          "USer ID not present Please log in"
+        )
         return;
       }
       
       // Check if API_BASE_URL is properly configured
       if (!API_BASE_URL || API_BASE_URL === 'undefined' || API_BASE_URL === '') {
         console.error('API_BASE_URL is not properly configured:', API_BASE_URL);
-        alert('Server configuration error. Please contact support.');
+        showMessage(
+          "Server Maintainance",
+          "Please try again later"
+        )
         return;
       }
       
@@ -461,13 +511,28 @@ const [myAds, setMyAds] = useState([]);
         setIsAdsSideSheetOpen(true);
         setIsDropdownOpen(false); // Close the dropdown when opening side sheet
       } else {
-        alert('You have not created any ads yet');
+        showMessage(
+          "No Ads",
+          "You haven't created any ads yet, Click the button below to create your first ad",
+          <button
+          onClick={() => {
+              closeMessageModal()
+              navigate('/add-product')
+            }}
+            className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all font-medium"
+          >
+            Make ads?
+          </button>
+        )
       }
       
       return data;
     } catch (error) {
       console.error('Error fetching ads:', error);
-      alert('Failed to fetch your ads. Please try again later.');
+      showMessage(
+        "Server Error", 
+        "Failed to fetch ads.",
+      )
       return [];
     }
   };
@@ -558,7 +623,7 @@ const [myAds, setMyAds] = useState([]);
                         <span>Your ads</span>
                       </button>
                       <button
-                        onClick={handleLogout}
+                        onClick={openLogout}
                         className="flex items-center w-full px-4 py-2 text-amber-800 hover:bg-amber-100 transition-colors"
                       >
                         <LogOut className="h-4 w-4 mr-2 text-amber-600" />
@@ -602,7 +667,7 @@ const [myAds, setMyAds] = useState([]);
           className="fixed inset-0 z-30 md:hidden bg-amber-900 bg-opacity-95 flex flex-col pt-16 pb-6 px-4"
         >
           <div className="space-y-4">
-            <button
+            {/* <button
               onClick={() => {
                 setIsFilterOpen(true);
                 setIsMobileMenuOpen(false);
@@ -611,8 +676,16 @@ const [myAds, setMyAds] = useState([]);
             >
               <Filter className="w-4 h-4 mr-3" />
               <span>Filters</span>
+            </button> */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-10 h-10 flex items-center justify-center bg-amber-600 text-white rounded-full hover:bg-amber-500 transition-colors"
+              aria-label="Close menu"
+            >
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            
             {!currentUser ? (
               <button
                 onClick={() => {
@@ -631,7 +704,7 @@ const [myAds, setMyAds] = useState([]);
                 </div>
 
                 <button
-                  onClick={handleLogout}
+                  onClick={openLogout}
                   className="flex items-center w-full px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors"
                 >
                   <LogOut className="h-4 w-4 mr-3" />
@@ -658,7 +731,7 @@ const [myAds, setMyAds] = useState([]);
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="mb-6 md:mb-8 flex justify-center">
           <div className="bg-amber-900 p-1 md:p-2 rounded-full">
-            <div className="grid grid-cols-3 gap-1 md:gap-2">
+            <div className="grid grid-cols-3 gap-4 md:gap-2">
               <button
                 onClick={() => setActiveTab("home")}
                 className={`text-white text-sm md:text-base px-3 py-1 rounded-full transition-colors duration-300 ease-in-out ${
@@ -740,10 +813,10 @@ const [myAds, setMyAds] = useState([]);
         </div>
       )}
         <AdsSideSheet 
-  isOpen={isAdsSideSheetOpen} 
-  onClose={() => setIsAdsSideSheetOpen(false)} 
-  ads={myAds} 
-/>
+        isOpen={isAdsSideSheetOpen} 
+        onClose={() => setIsAdsSideSheetOpen(false)} 
+        ads={myAds} 
+      />
       <AuthModal 
         isOpen={isAuthModalOpen} 
         emitMessage={handleAuthMessage}
@@ -757,7 +830,14 @@ const [myAds, setMyAds] = useState([]);
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />
-      
+      {messageModal.isOpen && (
+        <Modal
+          title={messageModal.title}
+          description={messageModal.description}
+          actions={messageModal.actions}
+          onClose={closeMessageModal}
+        />
+      )}
       {/* Add custom styles for hiding scrollbars */}
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {

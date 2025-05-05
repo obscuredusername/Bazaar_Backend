@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Mail, Phone, Copy, Edit, Save, X, Trash, Upload, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mail, Phone, Copy, Edit, Save, X, ArrowLeft, Trash, Upload, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import API_BASE_URL from "../config";
 
@@ -227,6 +227,13 @@ const ProductDetailsPage = () => {
     <div className="h-screen w-full bg-amber-50">
       <header className="sticky top-0 z-10 bg-amber-900 border-b border-amber-600 shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <button 
+            onClick={() => {navigate('/')}}
+            className="flex items-center text-amber-200 hover:text-amber-100 transition-colors mr-4"
+          >
+            <ArrowLeft className="h-5 w-5 mr-1" />
+            <span>Home</span>
+          </button>
           <h1 className="text-2xl font-bold text-amber-50">Product Details</h1>
           {isEditMode ? (
             <div className="flex gap-2">
