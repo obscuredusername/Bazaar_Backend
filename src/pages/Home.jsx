@@ -86,7 +86,6 @@ const ProductRow = ({ title, products, type, onProductClick }) => {
                 <div className="min-w-[160px] md:min-w-[240px] lg:min-w-[280px] max-w-[280px]" key={product.id}>
                   <ProductCard 
                     product={product} 
-                    onLikeClick={() => alert(`Liked ${product.id}`)}
                     onProductClick={() => onProductClick(product.id)}
                   />
                 </div>
@@ -131,15 +130,6 @@ const ProductCard = ({ product, onLikeClick, onProductClick }) => {
             e.target.src = 'https://via.placeholder.com/300';
           }}
         />
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onLikeClick();
-          }}
-          className="absolute top-2 right-2 md:top-3 md:right-3 bg-white/80 p-1.5 md:p-2 rounded-full hover:bg-white transition-colors"
-        >
-          <Heart className="w-4 h-4 md:w-5 md:h-5 text-amber-700 hover:fill-amber-500 hover:text-amber-500" />
-        </button>
       </div>
       <div className="p-3 md:p-4">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center">
@@ -198,7 +188,7 @@ const FilterPanel = ({ filters, setFilters, applyFilters, isOpen, onClose }) => 
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
       <div 
         ref={filterRef}
         className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md border-2 border-amber-200 max-h-[90vh] overflow-y-auto"
@@ -372,12 +362,13 @@ const [myAds, setMyAds] = useState([]);
     setFilteredProducts(filtered);
   };
 
-  if (selectedProductId) {
-    return <ProductDetailsPage 
-      productId={selectedProductId}
-      onBack={() => setSelectedProductId(null)} 
-    />;
-  }
+  useEffect(() => {
+    if (selectedProductId) {
+      navigate('/post', {
+        state: { productId: selectedProductId }
+      });
+    }
+  }, [selectedProductId, navigate]);
   
   // Handle user data from AuthModal
   const handleAuthMessage = (userData) => {

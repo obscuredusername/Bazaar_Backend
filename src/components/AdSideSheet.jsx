@@ -36,7 +36,9 @@ const AdsSideSheet = ({ isOpen, onClose, ads }) => {
   };
 
   const handleView = (adId) => {
-    navigate(`/product/${adId}`);
+    navigate(`/post`, {
+      state: {productId: adId}
+    });
     onClose();
   };
   
@@ -82,63 +84,14 @@ const handleDelete = async (productId) => {
   }
 };
 
-// Update a product
-const handleEdit = async (productId, formData) => {
-  try {
-    // Check if API_BASE_URL is properly configured
-    if (!API_BASE_URL || API_BASE_URL === 'undefined' || API_BASE_URL === '') {
-      console.error('API_BASE_URL is not properly configured:', API_BASE_URL);
-      alert('Server configuration error. Please contact support.');
-      return false;
+const handleEdit = async (adId) => {
+  navigate(`/post`, {
+    state: {
+      productId: adId,
+      editMode: true
     }
-    
-    const apiUrl = `${API_BASE_URL}/products/${productId}`;
-    console.log('Updating product:', productId);
-    
-    // The formData object can be created with:
-    // const formData = new FormData();
-    // formData.append('title', title);
-    // formData.append('price', price);
-    // etc.
-    
-    const response = await fetch(apiUrl, {
-      method: 'PUT',
-      body: formData // FormData handles the Content-Type header automatically
-    });
-    
-    if (!response.ok) {
-      console.error('Failed to update product', response.status, response.statusText);
-      throw new Error(`Failed to update product: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log('Update response:', data);
-    
-    // Process image URLs for display
-    if (data.images && Array.isArray(data.images)) {
-      const processedImages = data.images.map(imagePath => {
-        // If the path is already absolute, return as is
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-          return imagePath;
-        }
-        
-        // Otherwise, append the API_BASE_URL
-        const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-        return `${API_BASE_URL}/${cleanPath}`;
-      });
-      
-      data.images = processedImages;
-    }
-    
-    // Show success message
-    alert('Product updated successfully');
-    
-    return data;
-  } catch (error) {
-    console.error('Error updating product:', error);
-    alert('Failed to update product. Please try again later.');
-    return null;
-  }
+  });
+  onClose();
 };
 
   if (!isOpen) return null;
