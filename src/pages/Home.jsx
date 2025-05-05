@@ -4,6 +4,7 @@ import { Search, Heart, LogOut, User, ChevronDown, Filter, Menu, X } from "lucid
 import AuthModal from '../components/auth-modal';
 import ProductDetailsPage from './ProductDetailsPage';
 import API_BASE_URL from "../config";
+import bazaar from '../assets/manImg.png'
 import AdsSideSheet from '../components/AdSideSheet';
 
 // Fetch products from backend API
@@ -488,7 +489,11 @@ const [myAds, setMyAds] = useState([]);
       <header className="sticky top-0 z-10 bg-amber-900 border-b border-amber-600 shadow-md">
         <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <h1 className="text-xl md:text-2xl font-bold text-amber-50">Bazaar</h1>
+          <img 
+            src={bazaar} 
+            alt="Bazaar" 
+            style={{ width: '200px', height: '60px', objectFit: 'cover' }} 
+          />
           </div>
 
           {/* Mobile menu button */}
