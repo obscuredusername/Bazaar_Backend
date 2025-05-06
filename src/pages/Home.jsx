@@ -408,7 +408,6 @@ export default function Home() {
       "Logging out", 
       "Are you sure you want to Log Out?",
       <button
-
         onClick={() => {
           closeMessageModal()
           handleLogout()
@@ -462,7 +461,6 @@ export default function Home() {
       }
       
       console.log('Fetching ads for user ID:', userId);
-      
       // Ensure the URL is valid before making the request
       const apiUrl = `${API_BASE_URL}/ads`;
       console.log('Request URL:', apiUrl);
